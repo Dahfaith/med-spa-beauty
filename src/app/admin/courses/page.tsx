@@ -85,7 +85,8 @@ export default function AdminCoursesPage() {
         <p>Loading...</p>
       ) : (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <table className="w-full text-left">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50">
                 <th className="py-4 px-6 font-medium text-gray-600">Image</th>
@@ -145,6 +146,7 @@ export default function AdminCoursesPage() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

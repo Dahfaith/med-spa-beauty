@@ -40,7 +40,8 @@ export default function AdminBookingsPage() {
         <p>Loading...</p>
       ) : (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <table className="w-full text-left">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50">
                 <th className="py-4 px-6 font-medium text-gray-600">Client Name</th>
@@ -99,6 +100,7 @@ export default function AdminBookingsPage() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
