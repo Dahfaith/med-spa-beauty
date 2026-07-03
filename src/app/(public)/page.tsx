@@ -1,11 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import FadeIn from "@/components/ui/FadeIn";
+import TestimonialCarousel from "@/components/ui/TestimonialCarousel";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function Home() {
   const supabase = await createClient();
-  const { data: testimonials } = await supabase.from("testimonials").select("*").order("created_at", { ascending: false }).limit(3);
+  const { data: testimonials } = await supabase.from("testimonials").select("*").order("created_at", { ascending: false }).limit(10);
   const { data: settings } = await supabase.from("site_settings").select("*").eq("id", 1).single();
 
   const heroImage = settings?.hero_image_url || "https://images.unsplash.com/photo-1600334129128-68505d11263a?q=80&w=2070&auto=format&fit=crop";
@@ -131,26 +132,7 @@ export default async function Home() {
             <span className="text-secondary font-medium tracking-widest uppercase text-sm mb-2 block">Testimonials</span>
             <h2 className="text-3xl sm:text-4xl font-serif font-bold mb-16">What Our Clients Say</h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {testimonials && testimonials.length > 0 ? (
-                testimonials.map((testimonial: any) => (
-                  <div key={testimonial.id} className="bg-white/10 backdrop-blur-md border border-white/20 p-8 rounded-[2rem] text-left">
-                    <div className="flex items-center gap-2 mb-4 text-secondary text-xl tracking-widest">
-                      {'★'.repeat(testimonial.rating || 5)}{'☆'.repeat(5 - (testimonial.rating || 5))}
-                    </div>
-                    <p className="text-gray-200 mb-6 font-light leading-relaxed">"{testimonial.content}"</p>
-                    <div>
-                      <p className="font-bold font-serif text-lg">{testimonial.name}</p>
-                      <p className="text-secondary text-sm">{testimonial.role}</p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="col-span-full text-center text-gray-300 py-10">
-                  No testimonials available yet. Add some in the Admin Dashboard!
-                </div>
-              )}
-            </div>
+            <TestimonialCarousel testimonials={testimonials || []} />
           </div>
         </section>
     </>
