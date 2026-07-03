@@ -167,7 +167,7 @@ create policy "Allow public read access on gallery_images" on gallery_images for
 create policy "Allow public read access on testimonials" on testimonials for select using (true);
 
 -- Allow Public Inserts for Contact Form
-create policy "Allow public insert on bookings" on bookings for insert with check (true);
+create policy "Allow public insert on bookings" on bookings for insert to public with check (true);
 
 -- Require Authentication for Admin Actions
 create policy "Allow auth update on site_settings" on site_settings for update using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
