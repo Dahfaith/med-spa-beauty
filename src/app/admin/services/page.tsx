@@ -16,6 +16,7 @@ export default function AdminServicesPage() {
     category: "Medical Aesthetics",
     description: "",
     duration: "",
+    duration_minutes: 60,
     recovery_time: "",
     image_url: ""
   });
@@ -45,7 +46,7 @@ export default function AdminServicesPage() {
     if (!error) {
       setIsModalOpen(false);
       setEditId(null);
-      setFormData({ title: "", category: "Medical Aesthetics", description: "", duration: "", recovery_time: "", image_url: "" });
+      setFormData({ title: "", category: "Medical Aesthetics", description: "", duration: "", duration_minutes: 60, recovery_time: "", image_url: "" });
       fetchServices();
     } else {
       alert("Error saving service: " + error.message);
@@ -69,7 +70,7 @@ export default function AdminServicesPage() {
         <button 
           onClick={() => {
             setEditId(null);
-            setFormData({ title: "", category: "Medical Aesthetics", description: "", duration: "", recovery_time: "", image_url: "" });
+            setFormData({ title: "", category: "Medical Aesthetics", description: "", duration: "", duration_minutes: 60, recovery_time: "", image_url: "" });
             setIsModalOpen(true);
           }}
           className="bg-primary text-white px-6 py-2 rounded-md font-medium hover:bg-primary/90 transition-colors"
@@ -115,6 +116,7 @@ export default function AdminServicesPage() {
                           category: service.category || "Medical Aesthetics",
                           description: service.description || "",
                           duration: service.duration || "",
+                          duration_minutes: service.duration_minutes || 60,
                           recovery_time: service.recovery_time || "",
                           image_url: service.image_url || ""
                         });
@@ -172,10 +174,14 @@ export default function AdminServicesPage() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Duration (e.g. 45 mins)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Duration Display text (e.g. 45 mins)</label>
                   <input value={formData.duration} onChange={e => setFormData({...formData, duration: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-secondary focus:border-secondary outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Exact Time (Minutes)</label>
+                  <input type="number" required min="15" step="15" value={formData.duration_minutes} onChange={e => setFormData({...formData, duration_minutes: parseInt(e.target.value)})} className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-secondary focus:border-secondary outline-none" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Recovery Time</label>
