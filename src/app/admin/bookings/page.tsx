@@ -46,7 +46,7 @@ export default function AdminBookingsPage() {
               <tr className="border-b border-gray-200 bg-gray-50">
                 <th className="py-4 px-6 font-medium text-gray-600">Client Name</th>
                 <th className="py-4 px-6 font-medium text-gray-600">Contact</th>
-                <th className="py-4 px-6 font-medium text-gray-600">Inquiry Type</th>
+                <th className="py-4 px-6 font-medium text-gray-600">Service & Schedule</th>
                 <th className="py-4 px-6 font-medium text-gray-600">Status</th>
                 <th className="py-4 px-6 font-medium text-gray-600 text-right">Actions</th>
               </tr>
@@ -59,7 +59,24 @@ export default function AdminBookingsPage() {
                     {booking.email}<br/>
                     <span className="text-xs text-gray-400">{booking.phone}</span>
                   </td>
-                  <td className="py-4 px-6 text-gray-600">{booking.service_type}</td>
+                  <td className="py-4 px-6 text-gray-600">
+                    <span className="font-medium text-primary">{booking.service_type}</span>
+                    {booking.booking_date && (
+                      <div className="text-sm mt-1 flex items-center gap-1 text-gray-500">
+                        🗓 {booking.booking_date} 
+                        {booking.booking_time && ` at ${(() => {
+                            const [h, m] = booking.booking_time.split(':');
+                            const hour = parseInt(h);
+                            const ampm = hour >= 12 ? 'PM' : 'AM';
+                            const hour12 = hour % 12 || 12;
+                            return `${hour12}:${m} ${ampm}`;
+                        })()}`}
+                      </div>
+                    )}
+                    {booking.duration_minutes && (
+                      <div className="text-xs text-gray-400 mt-0.5">⏱ {booking.duration_minutes} mins</div>
+                    )}
+                  </td>
                   <td className="py-4 px-6">
                     <select 
                       value={booking.status} 

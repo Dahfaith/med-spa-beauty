@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { generateTimeSlots, getEstimatedDuration, BookedSlot } from "@/lib/scheduling";
 
 export default function ContactPage() {
   const supabase = createClient();
@@ -31,14 +32,73 @@ export default function ContactPage() {
     email: "",
     phone: "",
     service_type: "General Consultation",
-    message: ""
+    message: "",
+    booking_date: "",
+    booking_time: ""
   });
+
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+  const [isAcademy, setIsAcademy] = useState(false);
+
+  useEffect(() => {
+    // Academy classes don't need strict calendar slots
+    if (formData.service_type.includes("Class") || formData.service_type.includes("Partnership")) {
+      setIsAcademy(true);
+      setFormData(prev => ({...prev, booking_date: "", booking_time: ""}));
+      return;
+    }
+    
+    setIsAcademy(false);
+
+    if (!formData.booking_date) {
+      setAvailableSlots([]);
+      return;
+    }
+
+    const fetchSlots = async () => {
+      setIsLoadingSlots(true);
+      setFormData(prev => ({...prev, booking_time: ""})); // reset time when date changes
+
+      const duration = getEstimatedDuration(formData.service_type);
+      
+      const { data, error } = await supabase.rpc('get_booked_slots', { 
+        target_date: formData.booking_date 
+      });
+
+      if (error) {
+        console.error("Error fetching slots:", error);
+        setAvailableSlots([]);
+      } else {
+        const [year, month, day] = formData.booking_date.split('-');
+        const dateObj = new Date(parseInt(year), parseInt(month)-1, parseInt(day));
+        
+        const slots = generateTimeSlots(dateObj, duration, data as BookedSlot[]);
+        setAvailableSlots(slots);
+      }
+      setIsLoadingSlots(false);
+    };
+
+    fetchSlots();
+  }, [formData.booking_date, formData.service_type]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await supabase.from("bookings").insert([formData]);
+    const submitData = {
+      first_name: formData.first_name,
+      last_name: formData.last_name,
+      email: formData.email,
+      phone: formData.phone,
+      service_type: formData.service_type,
+      message: formData.message,
+      duration_minutes: isAcademy ? null : getEstimatedDuration(formData.service_type),
+      booking_date: formData.booking_date || null,
+      booking_time: formData.booking_time || null
+    };
+
+    const { error } = await supabase.from("bookings").insert([submitData]);
 
     if (!error) {
       setSuccess(true);
@@ -47,8 +107,10 @@ export default function ContactPage() {
         last_name: "",
         email: "",
         phone: "",
-        service_type: "Consultation",
-        message: ""
+        service_type: "General Consultation",
+        message: "",
+        booking_date: "",
+        booking_time: ""
       });
     } else {
       alert("Error submitting form. Please try again.");
@@ -56,6 +118,20 @@ export default function ContactPage() {
     
     setLoading(false);
   };
+
+  // Helper to format 24h to 12h for the dropdown
+  const formatTime12h = (time24: string) => {
+    const [h, m] = time24.split(':');
+    const hour = parseInt(h);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${m} ${ampm}`;
+  };
+
+  // Get tomorrow's date as YYYY-MM-DD for the date picker minimum
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const minDate = tomorrow.toISOString().split('T')[0];
 
   return (
     <div className="flex flex-col min-h-screen bg-soft-cream pt-20">
@@ -118,15 +194,15 @@ export default function ContactPage() {
               {success ? (
                 <div className="text-center py-16">
                   <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-4xl mx-auto mb-6">✓</div>
-                  <h3 className="text-3xl font-serif font-bold text-primary mb-4">Request Received!</h3>
+                  <h3 className="text-3xl font-serif font-bold text-primary mb-4">Booking Received!</h3>
                   <p className="text-gray-600 text-lg mb-8">
-                    Thank you for reaching out. A member of our team will contact you shortly.
+                    Thank you! Your requested time slot has been reserved. A member of our team will contact you shortly to confirm.
                   </p>
                   <button 
                     onClick={() => setSuccess(false)}
                     className="bg-primary text-white px-8 py-3 rounded-full font-medium hover:bg-primary/90 transition-colors"
                   >
-                    Send Another Message
+                    Make Another Booking
                   </button>
                 </div>
               ) : (
@@ -154,7 +230,7 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Service</label>
                   <select value={formData.service_type} onChange={e => setFormData({...formData, service_type: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-colors text-gray-700">
                     <optgroup label="General">
                       <option value="General Consultation">General Consultation</option>
@@ -176,13 +252,57 @@ export default function ContactPage() {
                   </select>
                 </div>
 
+                {!isAcademy && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Select Date</label>
+                      <input 
+                        required={!isAcademy}
+                        type="date" 
+                        min={minDate} 
+                        value={formData.booking_date} 
+                        onChange={e => {
+                          const date = new Date(e.target.value);
+                          if (date.getDay() === 0) {
+                            alert("Sorry, we are closed on Sundays. Please select another day.");
+                            return;
+                          }
+                          setFormData({...formData, booking_date: e.target.value});
+                        }} 
+                        className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-colors" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Available Time</label>
+                      <select 
+                        required={!isAcademy}
+                        disabled={!formData.booking_date || isLoadingSlots || availableSlots.length === 0}
+                        value={formData.booking_time} 
+                        onChange={e => setFormData({...formData, booking_time: e.target.value})} 
+                        className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-colors disabled:opacity-50 disabled:bg-gray-100"
+                      >
+                        <option value="">
+                          {isLoadingSlots ? "Loading slots..." : 
+                           !formData.booking_date ? "Select date first" : 
+                           availableSlots.length === 0 ? "Fully booked" : "Select time"}
+                        </option>
+                        {availableSlots.map(slot => (
+                          <option key={slot} value={slot}>
+                            {formatTime12h(slot)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
-                  <textarea required value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} rows={4} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-colors resize-none" placeholder="How can we help you today?"></textarea>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Additional Notes</label>
+                  <textarea value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} rows={3} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-colors resize-none" placeholder="Any special requests?"></textarea>
                 </div>
                 
                 <button disabled={loading} type="submit" className="w-full bg-primary text-white rounded-full py-4 font-bold text-lg hover:bg-primary/90 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-1">
-                  {loading ? "Submitting..." : "Send Message"}
+                  {loading ? "Processing..." : isAcademy ? "Send Message" : "Confirm Booking"}
                 </button>
               </form>
               )}
