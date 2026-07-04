@@ -3,8 +3,9 @@
 -- ========================================================
 -- This file contains EVERYTHING needed to set up a fresh database:
 -- 1. Table Definitions
--- 2. Row Level Security & Policies
--- 3. Initial Seed Data
+-- 2. Database Functions
+-- 3. Row Level Security & Policies
+-- 4. Initial Seed Data
 
 -- Enable UUID extension
 create extension if not exists "uuid-ossp";
@@ -33,6 +34,7 @@ create table if not exists services (
   benefits text,
   procedure_details text,
   duration text,
+  duration_minutes integer default 60,
   recovery_time text,
   image_url text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
@@ -86,13 +88,36 @@ create table if not exists bookings (
   email text not null,
   phone text,
   service_type text, 
+  booking_date date,
+  booking_time time,
+  duration_minutes integer default 60,
   message text,
   status text default 'Pending', 
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
 -- ==========================================
--- 2. ROW LEVEL SECURITY (RLS)
+-- 2. DATABASE FUNCTIONS
+-- ==========================================
+
+-- Function to fetch booked slots without exposing PII (bypassing RLS safely)
+create or replace function get_booked_slots(target_date date)
+returns table (
+  booking_time time, 
+  duration_minutes integer
+)
+language sql
+security definer
+as $$
+  select booking_time, duration_minutes 
+  from bookings
+  where booking_date = target_date 
+  and status != 'Cancelled' 
+  and booking_time is not null;
+$$;
+
+-- ==========================================
+-- 3. ROW LEVEL SECURITY (RLS)
 -- ==========================================
 
 alter table site_settings enable row level security;
@@ -105,60 +130,47 @@ alter table bookings enable row level security;
 
 -- Drop existing policies if re-running
 drop policy if exists "Allow public read access on site_settings" on site_settings;
-drop policy if exists "Allow public update on site_settings" on site_settings;
-drop policy if exists "Allow public insert on site_settings" on site_settings;
 drop policy if exists "Allow auth update on site_settings" on site_settings;
 drop policy if exists "Allow auth insert on site_settings" on site_settings;
 
 drop policy if exists "Allow public read access on services" on services;
-drop policy if exists "Allow public insert on services" on services;
-drop policy if exists "Allow public update on services" on services;
-drop policy if exists "Allow public delete on services" on services;
 drop policy if exists "Allow auth insert on services" on services;
 drop policy if exists "Allow auth update on services" on services;
 drop policy if exists "Allow auth delete on services" on services;
 
 drop policy if exists "Allow public read access on courses" on courses;
-drop policy if exists "Allow public insert on courses" on courses;
-drop policy if exists "Allow public update on courses" on courses;
-drop policy if exists "Allow public delete on courses" on courses;
 drop policy if exists "Allow auth insert on courses" on courses;
 drop policy if exists "Allow auth update on courses" on courses;
 drop policy if exists "Allow auth delete on courses" on courses;
 
 drop policy if exists "Allow public read access on team_members" on team_members;
-drop policy if exists "Allow public insert on team_members" on team_members;
-drop policy if exists "Allow public update on team_members" on team_members;
-drop policy if exists "Allow public delete on team_members" on team_members;
 drop policy if exists "Allow auth insert on team_members" on team_members;
 drop policy if exists "Allow auth update on team_members" on team_members;
 drop policy if exists "Allow auth delete on team_members" on team_members;
 
 drop policy if exists "Allow public read access on gallery_images" on gallery_images;
-drop policy if exists "Allow public insert on gallery_images" on gallery_images;
-drop policy if exists "Allow public delete on gallery_images" on gallery_images;
 drop policy if exists "Allow auth insert on gallery_images" on gallery_images;
 drop policy if exists "Allow auth delete on gallery_images" on gallery_images;
 
 drop policy if exists "Allow public read access on testimonials" on testimonials;
-drop policy if exists "Allow public insert on testimonials" on testimonials;
-drop policy if exists "Allow public update on testimonials" on testimonials;
-drop policy if exists "Allow public delete on testimonials" on testimonials;
 drop policy if exists "Allow auth insert on testimonials" on testimonials;
 drop policy if exists "Allow auth update on testimonials" on testimonials;
 drop policy if exists "Allow auth delete on testimonials" on testimonials;
 
+-- Bookings policies (from fix-all-policies.sql)
 drop policy if exists "Allow public insert on bookings" on bookings;
-drop policy if exists "Allow public update on bookings" on bookings;
-drop policy if exists "Allow public delete on bookings" on bookings;
-drop policy if exists "Allow auth update on bookings" on bookings;
-drop policy if exists "Allow auth delete on bookings" on bookings;
+drop policy if exists "Allow admin read bookings" on bookings;
+drop policy if exists "Enable insert for all users" on bookings;
+drop policy if exists "Enable read access for all users" on bookings;
+drop policy if exists "Enable read access for authenticated users" on bookings;
+drop policy if exists "Enable all access for authenticated users" on bookings;
+drop policy if exists "Enable public to insert bookings" on bookings;
+drop policy if exists "Public can insert bookings" on bookings;
+drop policy if exists "Admin has full access to bookings" on bookings;
 
--- ==========================================
--- 3. CREATE SECURE POLICIES
--- ==========================================
+-- Create Secure Policies
 
--- Allow Public Reads
+-- Public Reads
 create policy "Allow public read access on site_settings" on site_settings for select using (true);
 create policy "Allow public read access on services" on services for select using (true);
 create policy "Allow public read access on courses" on courses for select using (true);
@@ -166,10 +178,7 @@ create policy "Allow public read access on team_members" on team_members for sel
 create policy "Allow public read access on gallery_images" on gallery_images for select using (true);
 create policy "Allow public read access on testimonials" on testimonials for select using (true);
 
--- Allow Public Inserts for Contact Form
-create policy "Allow public insert on bookings" on bookings for insert to public with check (true);
-
--- Require Authentication for Admin Actions
+-- Auth Actions (Admin)
 create policy "Allow auth update on site_settings" on site_settings for update using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "Allow auth insert on site_settings" on site_settings for insert with check (auth.role() = 'authenticated');
 
@@ -192,8 +201,13 @@ create policy "Allow auth insert on testimonials" on testimonials for insert wit
 create policy "Allow auth update on testimonials" on testimonials for update using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "Allow auth delete on testimonials" on testimonials for delete using (auth.role() = 'authenticated');
 
-create policy "Allow auth update on bookings" on bookings for update using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-create policy "Allow auth delete on bookings" on bookings for delete using (auth.role() = 'authenticated');
+-- Bookings Policies
+create policy "Public can insert bookings" on bookings for insert to public with check (true);
+create policy "Admin has full access to bookings" on bookings for all to authenticated using (true) with check (true);
+
+-- Grant execution rights for the calendar function
+grant execute on function get_booked_slots(date) to anon;
+grant execute on function get_booked_slots(date) to authenticated;
 
 -- ==========================================
 -- 4. MASTER SEED DATA
