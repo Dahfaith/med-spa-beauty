@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display, Geist } from "next/font/google";
 import FloatingWidgets from "@/components/ui/FloatingWidgets";
+import ToastProvider from "@/components/providers/ToastProvider";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +33,7 @@ export default function RootLayout({
       className={cn("h-full", "antialiased", inter.variable, playfair.variable, "font-sans", geist.variable)}
     >
       <body className="min-h-full flex flex-col font-sans">
+        <ToastProvider />
         {children}
         <FloatingWidgets />
       </body>

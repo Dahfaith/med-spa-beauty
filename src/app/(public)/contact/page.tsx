@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "react-hot-toast";
 import { generateTimeSlots, getEstimatedDuration, BookedSlot } from "@/lib/scheduling";
 
 export default function ContactPage() {
@@ -102,6 +103,7 @@ export default function ContactPage() {
 
     if (!error) {
       setSuccess(true);
+      toast.success("Booking request sent successfully!", { duration: 4000 });
       setFormData({
         first_name: "",
         last_name: "",
@@ -113,7 +115,7 @@ export default function ContactPage() {
         booking_time: ""
       });
     } else {
-      alert("Error submitting form. Please try again.");
+      toast.error("Error submitting form. Please try again.");
     }
     
     setLoading(false);
@@ -264,7 +266,10 @@ export default function ContactPage() {
                         onChange={e => {
                           const date = new Date(e.target.value);
                           if (date.getDay() === 0) {
-                            alert("Sorry, we are closed on Sundays. Please select another day.");
+                            toast.error("Sorry, we are closed on Sundays. Please select another day.", {
+                              duration: 5000,
+                              icon: '🚫'
+                            });
                             return;
                           }
                           setFormData({...formData, booking_date: e.target.value});
