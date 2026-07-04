@@ -54,15 +54,44 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex justify-between items-center mb-6">
+      <div className="bg-transparent md:bg-white md:rounded-xl md:shadow-sm md:border md:border-gray-100 md:p-6">
+        <div className="flex justify-between items-center mb-4 md:mb-6 px-1 md:px-0">
           <h2 className="text-lg font-semibold">Recent Bookings & Inquiries</h2>
           <Link href="/admin/bookings" className="text-sm text-primary hover:underline font-medium">
             View All
           </Link>
         </div>
         
-        <div className="overflow-x-auto">
+        {/* MOBILE VIEW */}
+        <div className="grid grid-cols-1 gap-4 md:hidden">
+          {recentBookings && recentBookings.length > 0 ? (
+            recentBookings.map((booking) => (
+              <div key={booking.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="font-bold text-gray-900">{booking.first_name} {booking.last_name}</h4>
+                  <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                        booking.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 
+                        booking.status === 'Confirmed' ? 'bg-blue-100 text-blue-800' :
+                        booking.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                        'bg-red-100 text-red-800'
+                  }`}>
+                    {booking.status}
+                  </span>
+                </div>
+                <p className="text-sm text-primary font-medium mb-1">{booking.service_type || "General Inquiry"}</p>
+                <p className="text-xs text-gray-500 mb-4">🗓 {new Date(booking.created_at).toLocaleDateString()}</p>
+                <Link href="/admin/bookings" className="block text-center text-secondary font-medium text-sm px-4 py-2 bg-secondary/10 rounded-lg">
+                  Manage Booking
+                </Link>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-6 text-gray-500 bg-white rounded-xl border border-gray-100">No bookings found.</div>
+          )}
+        </div>
+
+        {/* DESKTOP VIEW */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-gray-200">

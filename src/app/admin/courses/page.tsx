@@ -84,32 +84,28 @@ export default function AdminCoursesPage() {
       {loading ? (
         <p>Loading...</p>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left min-w-[800px]">
-            <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="py-4 px-6 font-medium text-gray-600">Image</th>
-                <th className="py-4 px-6 font-medium text-gray-600">Course Title</th>
-                <th className="py-4 px-6 font-medium text-gray-600">Level</th>
-                <th className="py-4 px-6 font-medium text-gray-600">Fee</th>
-                <th className="py-4 px-6 font-medium text-gray-600 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {courses.map((course) => (
-                <tr key={course.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50/50">
-                  <td className="py-4 px-6">
-                    {course.image_url ? (
-                      <img src={course.image_url} alt={course.title} className="w-16 h-16 rounded object-cover" />
-                    ) : (
-                      <div className="w-16 h-16 bg-gray-200 rounded"></div>
-                    )}
-                  </td>
-                  <td className="py-4 px-6 font-medium text-gray-900">{course.title}</td>
-                  <td className="py-4 px-6 text-gray-600">{course.level}</td>
-                  <td className="py-4 px-6 text-gray-600">{course.fee}</td>
-                  <td className="py-4 px-6 text-right">
+        <>
+          {/* MOBILE VIEW (Cards) */}
+          <div className="grid grid-cols-1 gap-4 md:hidden">
+            {courses.map((course) => (
+              <div key={course.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4">
+                <div className="flex items-center gap-4">
+                  {course.image_url ? (
+                    <img src={course.image_url} alt={course.title} className="w-20 h-20 rounded-xl object-cover shrink-0" />
+                  ) : (
+                    <div className="w-20 h-20 bg-gray-100 rounded-xl flex shrink-0 items-center justify-center text-xs text-gray-400">No Img</div>
+                  )}
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-lg leading-tight mb-2">{course.title}</h3>
+                    <span className="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded-full">{course.level}</span>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 text-sm text-gray-600">
+                  <span className="font-semibold">Fee:</span> {course.fee}
+                </div>
+
+                <div className="flex justify-between items-center pt-2">
                     <button 
                       onClick={() => {
                         setEditId(course.id);
@@ -126,28 +122,88 @@ export default function AdminCoursesPage() {
                         });
                         setIsModalOpen(true);
                       }}
-                      className="text-secondary hover:underline mr-4 font-medium text-sm"
+                      className="text-secondary font-medium text-sm px-4 py-2 bg-secondary/10 rounded-lg flex-1 mr-2 text-center"
                     >
                       Edit
                     </button>
                     <button 
                       onClick={() => handleDelete(course.id)}
-                      className="text-red-500 hover:underline font-medium text-sm"
+                      className="text-red-500 font-medium text-sm px-4 py-2 bg-red-50 rounded-lg flex-1 ml-2 text-center"
                     >
                       Delete
                     </button>
-                  </td>
-                </tr>
-              ))}
-              {courses.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="py-8 text-center text-gray-500">No courses found. Click "Add New Course" to create one.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                </div>
+              </div>
+            ))}
+            {courses.length === 0 && <p className="text-center text-gray-500 py-8 bg-white rounded-2xl border border-gray-100">No courses found.</p>}
           </div>
-        </div>
+
+          {/* DESKTOP VIEW (Table) */}
+          <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left min-w-[800px]">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50">
+                    <th className="py-4 px-6 font-medium text-gray-600">Image</th>
+                    <th className="py-4 px-6 font-medium text-gray-600">Course Title</th>
+                    <th className="py-4 px-6 font-medium text-gray-600">Level</th>
+                    <th className="py-4 px-6 font-medium text-gray-600">Fee</th>
+                    <th className="py-4 px-6 font-medium text-gray-600 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {courses.map((course) => (
+                    <tr key={course.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50/50">
+                      <td className="py-4 px-6">
+                        {course.image_url ? (
+                          <img src={course.image_url} alt={course.title} className="w-16 h-16 rounded object-cover" />
+                        ) : (
+                          <div className="w-16 h-16 bg-gray-200 rounded"></div>
+                        )}
+                      </td>
+                      <td className="py-4 px-6 font-medium text-gray-900">{course.title}</td>
+                      <td className="py-4 px-6 text-gray-600">{course.level}</td>
+                      <td className="py-4 px-6 text-gray-600">{course.fee}</td>
+                      <td className="py-4 px-6 text-right">
+                        <button 
+                          onClick={() => {
+                            setEditId(course.id);
+                            setFormData({
+                              title: course.title || "",
+                              level: course.level || "Entry Level",
+                              duration: course.duration || "",
+                              fee: course.fee || "",
+                              description: course.description || "",
+                              certification: course.certification || "",
+                              requirements: course.requirements || "",
+                              accommodation: course.accommodation || "Not Included",
+                              image_url: course.image_url || ""
+                            });
+                            setIsModalOpen(true);
+                          }}
+                          className="text-secondary hover:underline mr-4 font-medium text-sm"
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(course.id)}
+                          className="text-red-500 hover:underline font-medium text-sm"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {courses.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-gray-500">No courses found. Click "Add New Course" to create one.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Add Modal */}

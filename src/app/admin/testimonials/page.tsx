@@ -71,24 +71,26 @@ export default function AdminTestimonialsPage() {
       {loading ? (
         <p>Loading...</p>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left min-w-[800px]">
-            <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="py-4 px-6 font-medium text-gray-600">Client Name</th>
-                <th className="py-4 px-6 font-medium text-gray-600">Review</th>
-                <th className="py-4 px-6 font-medium text-gray-600">Rating</th>
-                <th className="py-4 px-6 font-medium text-gray-600 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {reviews.map((rev) => (
-                <tr key={rev.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50/50">
-                  <td className="py-4 px-6 font-medium text-gray-900">{rev.name}<br/><span className="text-xs text-gray-500 font-normal">{rev.role}</span></td>
-                  <td className="py-4 px-6 text-gray-600 max-w-xs truncate">{rev.content}</td>
-                  <td className="py-4 px-6 text-yellow-500 font-bold">{rev.rating} / 5</td>
-                  <td className="py-4 px-6 text-right">
+        <>
+          {/* MOBILE VIEW (Cards) */}
+          <div className="grid grid-cols-1 gap-4 md:hidden">
+            {reviews.map((rev) => (
+              <div key={rev.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-lg leading-tight mb-1">{rev.name}</h3>
+                    <p className="text-sm font-medium text-gray-500">{rev.role}</p>
+                  </div>
+                  <div className="text-yellow-500 font-bold bg-yellow-50 px-2 py-1 rounded-lg text-sm">
+                    ★ {rev.rating}/5
+                  </div>
+                </div>
+                
+                <p className="text-sm text-gray-700 bg-gray-50 p-4 rounded-xl border border-gray-100 italic">
+                  "{rev.content}"
+                </p>
+
+                <div className="flex justify-between items-center pt-2">
                     <button 
                       onClick={() => {
                         setEditId(rev.id);
@@ -100,28 +102,75 @@ export default function AdminTestimonialsPage() {
                         });
                         setIsModalOpen(true);
                       }}
-                      className="text-secondary hover:underline mr-4 font-medium text-sm"
+                      className="text-secondary font-medium text-sm px-4 py-2 bg-secondary/10 rounded-lg flex-1 mr-2 text-center"
                     >
                       Edit
                     </button>
                     <button 
                       onClick={() => handleDelete(rev.id)}
-                      className="text-red-500 hover:underline font-medium text-sm"
+                      className="text-red-500 font-medium text-sm px-4 py-2 bg-red-50 rounded-lg flex-1 ml-2 text-center"
                     >
                       Delete
                     </button>
-                  </td>
-                </tr>
-              ))}
-              {reviews.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="py-8 text-center text-gray-500">No testimonials found.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                </div>
+              </div>
+            ))}
+            {reviews.length === 0 && <p className="text-center text-gray-500 py-8 bg-white rounded-2xl border border-gray-100">No testimonials found.</p>}
           </div>
-        </div>
+
+          {/* DESKTOP VIEW (Table) */}
+          <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left min-w-[800px]">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50">
+                    <th className="py-4 px-6 font-medium text-gray-600">Client Name</th>
+                    <th className="py-4 px-6 font-medium text-gray-600">Review</th>
+                    <th className="py-4 px-6 font-medium text-gray-600">Rating</th>
+                    <th className="py-4 px-6 font-medium text-gray-600 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reviews.map((rev) => (
+                    <tr key={rev.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50/50">
+                      <td className="py-4 px-6 font-medium text-gray-900">{rev.name}<br/><span className="text-xs text-gray-500 font-normal">{rev.role}</span></td>
+                      <td className="py-4 px-6 text-gray-600 max-w-xs truncate">{rev.content}</td>
+                      <td className="py-4 px-6 text-yellow-500 font-bold">{rev.rating} / 5</td>
+                      <td className="py-4 px-6 text-right">
+                        <button 
+                          onClick={() => {
+                            setEditId(rev.id);
+                            setFormData({
+                              name: rev.name || "",
+                              role: rev.role || "",
+                              content: rev.content || "",
+                              rating: rev.rating || 5
+                            });
+                            setIsModalOpen(true);
+                          }}
+                          className="text-secondary hover:underline mr-4 font-medium text-sm"
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(rev.id)}
+                          className="text-red-500 hover:underline font-medium text-sm"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {reviews.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="py-8 text-center text-gray-500">No testimonials found.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
 
       {isModalOpen && (

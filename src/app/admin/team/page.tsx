@@ -74,29 +74,24 @@ export default function AdminTeamPage() {
       {loading ? (
         <p>Loading...</p>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left min-w-[800px]">
-            <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="py-4 px-6 font-medium text-gray-600">Photo</th>
-                <th className="py-4 px-6 font-medium text-gray-600">Name & Role</th>
-                <th className="py-4 px-6 font-medium text-gray-600">Bio</th>
-                <th className="py-4 px-6 font-medium text-gray-600 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {team.map((member) => (
-                <tr key={member.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50/50">
-                  <td className="py-4 px-6">
-                    <img src={member.image_url} alt={member.name} className="w-12 h-12 rounded-full object-cover shadow-sm" />
-                  </td>
-                  <td className="py-4 px-6">
-                    <p className="font-medium text-gray-900">{member.name}</p>
-                    <p className="text-sm text-gray-500">{member.role}</p>
-                  </td>
-                  <td className="py-4 px-6 text-gray-600 text-sm max-w-xs truncate">{member.bio}</td>
-                  <td className="py-4 px-6 text-right">
+        <>
+          {/* MOBILE VIEW (Cards) */}
+          <div className="grid grid-cols-1 gap-4 md:hidden">
+            {team.map((member) => (
+              <div key={member.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4">
+                <div className="flex items-center gap-4">
+                  <img src={member.image_url} alt={member.name} className="w-16 h-16 rounded-full object-cover shrink-0 shadow-sm" />
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-lg leading-tight mb-1">{member.name}</h3>
+                    <p className="text-sm font-medium text-primary">{member.role}</p>
+                  </div>
+                </div>
+                
+                <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100 italic">
+                  "{member.bio}"
+                </p>
+
+                <div className="flex justify-between items-center pt-2">
                     <button 
                       onClick={() => {
                         setEditId(member.id);
@@ -108,28 +103,80 @@ export default function AdminTeamPage() {
                         });
                         setIsModalOpen(true);
                       }}
-                      className="text-secondary hover:underline mr-4 font-medium text-sm"
+                      className="text-secondary font-medium text-sm px-4 py-2 bg-secondary/10 rounded-lg flex-1 mr-2 text-center"
                     >
                       Edit
                     </button>
                     <button 
                       onClick={() => handleDelete(member.id)}
-                      className="text-red-500 hover:underline font-medium text-sm"
+                      className="text-red-500 font-medium text-sm px-4 py-2 bg-red-50 rounded-lg flex-1 ml-2 text-center"
                     >
                       Delete
                     </button>
-                  </td>
-                </tr>
-              ))}
-              {team.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="py-8 text-center text-gray-500">No team members found.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                </div>
+              </div>
+            ))}
+            {team.length === 0 && <p className="text-center text-gray-500 py-8 bg-white rounded-2xl border border-gray-100">No team members found.</p>}
           </div>
-        </div>
+
+          {/* DESKTOP VIEW (Table) */}
+          <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left min-w-[800px]">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50">
+                    <th className="py-4 px-6 font-medium text-gray-600">Photo</th>
+                    <th className="py-4 px-6 font-medium text-gray-600">Name & Role</th>
+                    <th className="py-4 px-6 font-medium text-gray-600">Bio</th>
+                    <th className="py-4 px-6 font-medium text-gray-600 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {team.map((member) => (
+                    <tr key={member.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50/50">
+                      <td className="py-4 px-6">
+                        <img src={member.image_url} alt={member.name} className="w-12 h-12 rounded-full object-cover shadow-sm" />
+                      </td>
+                      <td className="py-4 px-6">
+                        <p className="font-medium text-gray-900">{member.name}</p>
+                        <p className="text-sm text-gray-500">{member.role}</p>
+                      </td>
+                      <td className="py-4 px-6 text-gray-600 text-sm max-w-xs truncate">{member.bio}</td>
+                      <td className="py-4 px-6 text-right">
+                        <button 
+                          onClick={() => {
+                            setEditId(member.id);
+                            setFormData({
+                              name: member.name || "",
+                              role: member.role || "",
+                              bio: member.bio || "",
+                              image_url: member.image_url || ""
+                            });
+                            setIsModalOpen(true);
+                          }}
+                          className="text-secondary hover:underline mr-4 font-medium text-sm"
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(member.id)}
+                          className="text-red-500 hover:underline font-medium text-sm"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {team.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="py-8 text-center text-gray-500">No team members found.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
 
       {isModalOpen && (
